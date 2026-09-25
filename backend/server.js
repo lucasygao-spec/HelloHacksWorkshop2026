@@ -2,19 +2,19 @@ const express = require('express')
 const cors = require('cors')
 
 const app = express()
-const PORT = 3000
+const PORT = 5001
 
 // Let the React app (running on a different port) call this server
 app.use(cors())
 // Parse JSON request bodies
 app.use(express.json())
 
-// Homepage: visit http://localhost:3000 to check the server is running
+// Homepage: visit http://localhost:5001 to check the server is running
 app.get('/', (req, res) => {
   res.send('Backend is running!')
 })
 
-// GET endpoint: visit http://localhost:3000/api/type/fire (or a type id like /api/type/10)
+// GET endpoint: visit http://localhost:5001/api/type/fire (or a type id like /api/type/10)
 app.get('/api/type/:type', async (req, res) => {
   const type = req.params.type.toLowerCase()
 

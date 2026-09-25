@@ -1,64 +1,84 @@
 import { useState } from 'react'
 
 const types = [
-  { name: 'Fire', icon: '🔥', color: 'from-orange-400 to-red-500', ring: 'ring-orange-300' },
-  { name: 'Water', icon: '💧', color: 'from-sky-400 to-blue-600', ring: 'ring-sky-300' },
-  { name: 'Fairy', icon: '✨', color: 'from-pink-300 to-fuchsia-500', ring: 'ring-pink-300' },
-  { name: 'Steel', icon: '⚙️', color: 'from-slate-300 to-slate-500', ring: 'ring-slate-300' },
+  { name: 'Fire', dot: 'bg-orange-500', border: 'border-orange-500' },
+  { name: 'Water', dot: 'bg-sky-500', border: 'border-sky-500' },
+  { name: 'Fairy', dot: 'bg-pink-400', border: 'border-pink-400' },
+  { name: 'Steel', dot: 'bg-zinc-400', border: 'border-zinc-400' },
 ]
+
+// ["rock", "fire"] -> "Rock, Fire"
+function formatTypes(list) {
+  if (!list || list.length === 0) return 'None'
+  return list.map((t) => t[0].toUpperCase() + t.slice(1)).join(', ')
+}
 
 function App() {
   const [selected, setSelected] = useState(null)
+  const [result, setResult] = useState(null)
 
-  function getMatchup(type) {
-  // API CALL WILL GO HERE, AND WE WILL RETURN THE RESPONSE
-  return `Fake API response: You are fighting a ${type}-type Pokémon.`;
-}
+  async function getMatchup(type) {
+    try {
+      const response = await fetch(`http://localhost:5001/api/type/${type}`)
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error(error)
+      return { error: 'Could not reach the backend. Is it running?' }
+    }
+  }
 
-function handleTypeClick(type) {
-  const response = getMatchup(type);
-  setResult(response);
-}
+  async function handleTypeClick(type) {
+    setSelected(type)
+    const response = await getMatchup(type)
+    setResult(response)
+  }
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-100 via-white to-red-50 flex items-center justify-center p-4 font-display">
-      <main className="w-full max-w-md rounded-3xl bg-white shadow-2xl shadow-red-900/10 overflow-hidden">
-        <header className="relative bg-linear-to-b from-red-500 to-red-600 px-8 pt-10 pb-14 text-center">
-          <p className="text-red-100 text-sm font-medium tracking-widest uppercase">Trainer Tools</p>
-          <h1 className="mt-1 text-3xl font-bold text-white drop-shadow-sm">Battle Assistant</h1>
-          <div className="absolute inset-x-0 bottom-0 h-3 translate-y-1/2 bg-slate-900" />
-          <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 size-14 rounded-full bg-slate-900 grid place-items-center">
-            <div className="size-9 rounded-full bg-white ring-4 ring-slate-200 grid place-items-center">
-              <div className="size-3 rounded-full bg-slate-200" />
-            </div>
-          </div>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 font-display text-zinc-300">
+      <main className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+        <header className="flex items-center gap-3">
+          <div className="size-6 rounded-full border-2 border-zinc-950 bg-linear-to-b from-red-500 from-50% to-zinc-100 to-50% ring-1 ring-zinc-700" />
+          <h1 className="text-xl font-semibold text-zinc-100">Battle Assistant</h1>
         </header>
 
-        <section className="px-8 pt-14 pb-8">
-          <p className="text-center text-lg font-medium text-slate-700">
-            What type are you fighting?
-          </p>
-          <div className="mt-6 grid grid-cols-2 gap-4">
-            {types.map((type) => {
-              const isSelected = selected === type.name
-              return (
-                <button
-                  key={type.name}
-                  onClick={() => handleTypeClick(type.name)}                  className={`group flex items-center gap-3 rounded-2xl bg-linear-to-br ${type.color} px-4 py-3 text-left text-white font-semibold shadow-md transition hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 cursor-pointer ${
-                    isSelected ? `ring-4 ${type.ring} ring-offset-2` : ''
-                  }`}
-                >
-                  <span className="grid size-9 place-items-center rounded-full bg-white/25 text-lg">
-                    {type.icon}
-                  </span>
-                  {type.name}
-                </button>
-              )
-            })}
+        <p className="mt-8 text-sm text-zinc-500">What type are you fighting?</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {types.map((type) => {
+            const isSelected = selected === type.name
+            return (
+              <button
+                key={type.name}
+                onClick={() => handleTypeClick(type.name)}
+                className={`flex items-center gap-3 rounded-lg border bg-zinc-800/50 px-4 py-3 text-left font-medium transition-colors cursor-pointer hover:bg-zinc-800 ${
+                  isSelected ? `${type.border} text-zinc-100` : 'border-zinc-800 text-zinc-400'
+                }`}
+              >
+                <span className={`size-2.5 rounded-full ${type.dot}`} />
+                {type.name}
+              </button>
+            )
+          })}
+        </div>
+
+        {result && (
+          <div className="mt-6 border-t border-zinc-800 pt-6 space-y-4">
+            {result.error ? (
+              <p className="text-sm text-red-400">{result.error}</p>
+            ) : (
+              <>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-zinc-500">Attack with</p>
+                  <p className="mt-1 text-zinc-100">{formatTypes(result.double_damage_from)}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-zinc-500">Safe to send out</p>
+                  <p className="mt-1 text-zinc-100">{formatTypes(result.half_damage_to)}</p>
+                </div>
+              </>
+            )}
           </div>
-          <p className="mt-6 h-6 text-center text-slate-500">
-            {selected ? <>Opponent type: <span className="font-semibold text-slate-800">{selected}</span></> : 'Pick a type to get started'}
-          </p>
-        </section>
+        )}
       </main>
     </div>
   )
